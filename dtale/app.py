@@ -821,6 +821,7 @@ def show(data=None, data_loader=None, name=None, context_vars=None, **options):
             background_mode=final_options["background_mode"],
             range_highlights=final_options["range_highlights"],
             vertical_headers=final_options["vertical_headers"],
+            header_rotation=final_options.get("header_rotation"),
             is_proxy=JUPYTER_SERVER_PROXY,
             app_root=final_app_root,
             hide_shutdown=final_options.get("hide_shutdown"),

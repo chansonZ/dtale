@@ -129,16 +129,36 @@ export const getActiveLockedCols = (columns: ColumnDef[], backgroundMode?: strin
 export const getCol = (index: number, columns: ColumnDef[], backgroundMode?: string): ColumnDef | undefined =>
   getActiveCols(columns, backgroundMode)[index];
 
+/**
+ * Determine the effective column header rotation angle (in degrees) for an instance's settings.
+ * Priority: an explicitly configured "headerRotation" (including 0) always wins. Otherwise fall back to the
+ * legacy "verticalHeaders" boolean, which is equivalent to a rotation of -90 degrees when enabled.
+ *
+ * @param settings instance settings
+ * @return rotation angle in degrees, 0 for horizontal (non-rotated) headers
+ */
+export const getHeaderRotation = (settings?: InstanceSettings): number => {
+  if (settings?.headerRotation !== undefined && settings?.headerRotation !== null) {
+    return settings.headerRotation;
+  }
+  return settings?.verticalHeaders ? -90 : -45;
+};
+
+const toRadians = (degrees: number): number => (degrees * Math.PI) / 180;
+
 export const getColWidth = (
   index: number,
   columns: ColumnDef[],
   backgroundMode?: string,
-  verticalHeaders = false,
+  headerRotation = 0,
 ): number => {
   const col = getCol(index, columns, backgroundMode);
   let width = col?.width;
-  if (verticalHeaders) {
-    width = col?.resized ? width : (col?.dataWidth ?? width);
+  if (headerRotation && !col?.resized) {
+    const rad = toRadians(headerRotation);
+    const textWidth = col?.headerWidth ?? col?.width ?? DEFAULT_COL_WIDTH;
+    const rotatedWidth = Math.ceil(Math.abs(textWidth * Math.cos(rad)) + Math.abs(HEADER_HEIGHT * Math.sin(rad)));
+    width = Math.max(col?.dataWidth ?? 0, rotatedWidth);
   }
   return width ?? DEFAULT_COL_WIDTH;
 };
@@ -151,13 +171,16 @@ export const getRowHeight = (
   columns: ColumnDef[],
   backgroundMode: string | undefined,
   maxRowHeight: number | undefined,
-  verticalHeaders = false,
+  headerRotation = 0,
 ): number => {
   if (index === 0) {
-    if (verticalHeaders) {
+    if (headerRotation) {
+      const rad = toRadians(headerRotation);
       const cols = getActiveCols(columns, backgroundMode);
-      const maxWidth = Math.max(...cols.map((col) => col.headerWidth ?? col.width ?? HEADER_HEIGHT));
-      return maxWidth < HEADER_HEIGHT ? HEADER_HEIGHT : maxWidth;
+      const maxWidth =
+        cols.length > 0 ? Math.max(...cols.map((col) => col.headerWidth ?? col.width ?? HEADER_HEIGHT)) : HEADER_HEIGHT;
+      const rotatedHeight = Math.ceil(Math.abs(maxWidth * Math.sin(rad)) + Math.abs(HEADER_HEIGHT * Math.cos(rad)));
+      return rotatedHeight < HEADER_HEIGHT ? HEADER_HEIGHT : rotatedHeight;
     }
     return HEADER_HEIGHT;
   }

@@ -355,7 +355,11 @@ class DtaleData(object):
         * custom_formats - display formatting for specific columns
         * background_mode - different background displays in grid
         * range_highlights - specify background colors for ranges of values in the grid
-        * vertical_headers - if True, then rotate column headers vertically
+        * vertical_headers - if True, then rotate column headers vertically (-90 degrees). Equivalent to
+                             header_rotation=-90 when header_rotation is not otherwise specified.
+        * header_rotation - the angle (in degrees, -180 to 180) to rotate column headers. Takes precedence over
+                            vertical_headers when specified (including a value of 0 for horizontal headers).
+                            Defaults to -45 degrees when neither header_rotation nor vertical_headers is specified.
         * column_edit_options - the options to allow on the front-end when editing a cell for the columns specified
         * highlight_filter - if True, then highlight rows on the frontend which will be filtered when applying a filter
                              rather than hiding them from the dataframe
@@ -378,6 +382,7 @@ class DtaleData(object):
             column_formats="columnFormats",
             background_mode="backgroundMode",
             vertical_headers="verticalHeaders",
+            header_rotation="headerRotation",
             highlight_filter="highlightFilter",
         )
         settings = {name_updates.get(k, k): v for k, v in updates.items()}
@@ -907,6 +912,26 @@ def is_koalas(data):
         return False
 
 
+def normalize_header_rotation(header_rotation):
+    """
+    Validates & normalizes the "header_rotation" input to :meth:`dtale.views.startup`.
+
+    :param header_rotation: the angle (in degrees) to rotate column headers, must be between -180 and 180
+    :return: int or None
+    """
+    if header_rotation is None:
+        return None
+    try:
+        header_rotation = int(header_rotation)
+    except (TypeError, ValueError):
+        raise ValueError(
+            "header_rotation must be a numeric value between -180 and 180"
+        )
+    if header_rotation < -180 or header_rotation > 180:
+        raise ValueError("header_rotation must be between -180 and 180")
+    return header_rotation
+
+
 def startup(
     url="",
     data=None,
@@ -931,6 +956,7 @@ def startup(
     app_root=None,
     is_proxy=None,
     vertical_headers=False,
+    header_rotation=None,
     hide_shutdown=None,
     theme=None,
     column_edit_options=None,
@@ -1002,8 +1028,14 @@ def startup(
     :param range_highlights: Definitions for equals, less-than or greater-than ranges for individual (or all) columns
                              which apply different background colors to cells which fall in those ranges.
     :type range_highlights: dict, optional
-    :param vertical_headers: if True, then rotate column headers vertically
+    :param vertical_headers: if True, then rotate column headers vertically (equivalent to header_rotation=-90 when
+                             header_rotation is not specified)
     :type vertical_headers: boolean, optional
+    :param header_rotation: the angle (in degrees, -180 to 180) to rotate column headers. Takes precedence over
+                            vertical_headers when specified, including a value of 0 which will force horizontal
+                            headers even if vertical_headers is True. If not specified, defaults to -45 degrees
+                            (or -90 degrees if vertical_headers is True).
+    :type header_rotation: int, optional
     :param column_edit_options: The options to allow on the front-end when editing a cell for the columns specified
     :type column_edit_options: dict, optional
     :param auto_hide_empty_columns: if True, then auto-hide any columns on the front-end that are comprised entirely of
@@ -1013,6 +1045,7 @@ def startup(
                              rather than hiding them from the dataframe
     :type highlight_filter: boolean, optional
     """
+    header_rotation = normalize_header_rotation(header_rotation)
 
     if (
         data_loader is None and data is None
@@ -1064,6 +1097,7 @@ def startup(
             app_root=app_root,
             is_proxy=is_proxy,
             vertical_headers=vertical_headers,
+            header_rotation=header_rotation,
             hide_shutdown=hide_shutdown,
             theme=theme,
             column_edit_options=column_edit_options,
@@ -1141,6 +1175,7 @@ def startup(
                 app_root=app_root,
                 is_proxy=is_proxy,
                 vertical_headers=vertical_headers,
+                header_rotation=header_rotation,
                 hide_shutdown=hide_shutdown,
                 theme=theme,
                 column_edit_options=column_edit_options,
@@ -1202,6 +1237,13 @@ def startup(
             rangeHighlight=range_highlights,
             verticalHeaders=vertical_headers,
             highlightFilter=highlight_filter,
+        )
+        # default rotation is -45 degrees when unspecified; vertical_headers=True still maps to the
+        # legacy -90 degree rotation unless header_rotation is explicitly provided
+        base_settings["headerRotation"] = (
+            header_rotation
+            if header_rotation is not None
+            else (-90 if vertical_headers else -45)
         )
         base_predefined = predefined_filters.init_filters()
         if base_predefined:

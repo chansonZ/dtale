@@ -28,7 +28,7 @@
 }
 
 .rotate-header {
-  transform: rotate(-90deg);
+  transform: rotate(var(--header-rotation, -90deg));
 }
 
 .active-resize {

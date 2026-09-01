@@ -228,3 +228,15 @@ def test_settings_management():
         mock_default_store.reset_mock()
         instance.get_settings()
         mock_get_settings.assert_called_once_with("9999")
+
+        mock_default_store.reset_mock()
+        instance.update_settings(header_rotation=45)
+        mock_default_store.set_settings.assert_called_once_with(
+            "9999", dict(headerRotation=45)
+        )
+
+        mock_default_store.reset_mock()
+        instance.update_settings(vertical_headers=True)
+        mock_default_store.set_settings.assert_called_once_with(
+            "9999", dict(verticalHeaders=True)
+        )

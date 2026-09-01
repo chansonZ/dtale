@@ -40,7 +40,6 @@ const selectResult = createSelector(
     selectors.selectMaxColumnWidth,
     selectors.selectMaxRowHeight,
     selectors.selectEditedTextAreaHeight,
-    selectors.selectVerticalHeaders,
   ],
   (
     theme,
@@ -50,7 +49,6 @@ const selectResult = createSelector(
     maxColumnWidth,
     maxRowHeight,
     editedTextAreaHeight,
-    verticalHeaders,
   ) => ({
     theme,
     settings,
@@ -59,7 +57,6 @@ const selectResult = createSelector(
     maxColumnWidth: maxColumnWidth || undefined,
     maxRowHeight: maxRowHeight || undefined,
     editedTextAreaHeight,
-    verticalHeaders: verticalHeaders ?? false,
   }),
 );
 
@@ -72,10 +69,10 @@ export const ServerlessDataViewer: React.FC<ServerlessDataViewerProps> = ({ resp
     maxColumnWidth,
     maxRowHeight,
     editedTextAreaHeight,
-    verticalHeaders,
   } = useAppSelector(selectResult);
   const dispatch = useAppDispatch();
   const updateFilteredRanges = (query: string): void => dispatch(actions.updateFilteredRanges(query));
+  const headerRotation = gu.getHeaderRotation(settings);
 
   const [rowCount, setRowCount] = React.useState(0);
   const [data, setData] = React.useState<DataViewerData>({});
@@ -135,7 +132,7 @@ export const ServerlessDataViewer: React.FC<ServerlessDataViewerProps> = ({ resp
           ),
         })),
       );
-      setTriggerResize(verticalHeaders);
+      setTriggerResize(!!headerRotation);
     }
   };
 
@@ -209,7 +206,7 @@ export const ServerlessDataViewer: React.FC<ServerlessDataViewerProps> = ({ resp
             <MultiGrid
               {...gu.buildGridStyles(
                 theme,
-                gu.getRowHeight(0, columns, settings.backgroundMode, maxRowHeight, verticalHeaders),
+                gu.getRowHeight(0, columns, settings.backgroundMode, maxRowHeight, headerRotation),
               )}
               overscanColumnCount={0}
               overscanRowCount={5}
@@ -220,9 +217,9 @@ export const ServerlessDataViewer: React.FC<ServerlessDataViewerProps> = ({ resp
               cellRenderer={cellRenderer}
               height={gu.gridHeight(height, columns, settings, ribbonMenuOpen, editedTextAreaHeight)}
               width={width - (menuPinned ? 198 : 3)}
-              columnWidth={({ index }) => gu.getColWidth(index, columns, settings.backgroundMode, verticalHeaders)}
+              columnWidth={({ index }) => gu.getColWidth(index, columns, settings.backgroundMode, headerRotation)}
               rowHeight={({ index }) =>
-                gu.getRowHeight(index, columns, settings.backgroundMode, maxRowHeight, verticalHeaders)
+                gu.getRowHeight(index, columns, settings.backgroundMode, maxRowHeight, headerRotation)
               }
               ref={gridRef}
             />

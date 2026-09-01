@@ -149,6 +149,7 @@ def test_load_auth_settings():
 def test_build_show_options(unittest):
     final_options = build_show_options()
     assert final_options["allow_cell_edits"]
+    assert final_options["header_rotation"] is None
 
     options = dict(allow_cell_edits=False)
     final_options = build_show_options(options)
@@ -171,6 +172,7 @@ def test_build_show_options(unittest):
     )
     assert not final_options["auto_hide_empty_columns"]
     assert not final_options["highlight_filter"]
+    assert final_options["header_rotation"] == 45
 
     final_options = build_show_options(options)
     assert not final_options["allow_cell_edits"]
