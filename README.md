@@ -608,7 +608,8 @@ Here's a short description of each instance setting available:
 | `locked` | list | `None` | List of column names which will be locked to the right side of your grid while you scroll to the left. |
 | `background_mode` | str | `None` | A string denoting one of the background display modes. See [background_mode](#background_mode) below. |
 | `range_highlights` | dict | `None` | Dictionary of column name keys and range configurations for conditional highlighting. See [range_highlights](#range_highlights) below. |
-| `vertical_headers` | bool | `False` | If `True`, headers in your grid will be rotated 90 degrees vertically to conserve width. See [vertical_headers](#vertical_headers) below. |
+| `vertical_headers` | bool | `False` | If `True`, headers in your grid will be rotated -90 degrees vertically to conserve width. Equivalent to `header_rotation=-90` when `header_rotation` isn't specified. See [vertical_headers](#vertical_headers) below. |
+| `header_rotation` | int | `-45` | The angle (in degrees, -180 to 180) to rotate column headers. Takes precedence over `vertical_headers` (including a value of `0` for horizontal headers). Defaults to `-45` degrees, or `-90` degrees when `vertical_headers=True`. See [header_rotation](#header_rotation) below. |
 | `precision` | int | `2` | The default decimal precision for float values. |
 | `theme` | str | `"light"` | Display theme for the app. Options are `"light"` and `"dark"`. |
 | `main_title` | str | `None` | Custom title to display in the header and browser tab (replaces "D-Tale"). |
@@ -703,9 +704,33 @@ Each condition has these properties:
 
 #### vertical_headers
 
-If set to `True` then the headers in your grid will be rotated 90 degrees vertically to conserve width.
+If set to `True` then the headers in your grid will be rotated -90 degrees vertically to conserve width. This is
+equivalent to setting `header_rotation=-90` when `header_rotation` is not otherwise specified.
 
 ![](https://raw.githubusercontent.com/aschonfeld/dtale-media/master/images/vertical_headers.png)
+
+#### header_rotation
+
+The angle (in degrees, from -180 to 180) to rotate your grid's column headers. Positive & negative values follow
+standard CSS `rotate()` semantics (positive rotates clockwise, negative rotates counter-clockwise). This takes
+precedence over `vertical_headers` whenever it is specified, including a value of `0` which will force horizontal
+headers even when `vertical_headers=True`.
+
+If neither `header_rotation` nor `vertical_headers` is specified, headers default to a `-45` degree rotation. If
+`vertical_headers=True` is specified without `header_rotation`, headers will default to the legacy `-90` degree
+rotation.
+
+Example (45 degree rotation):
+```python
+import dtale
+
+dtale.show(df, header_rotation=45)
+```
+
+or update an existing instance:
+```python
+d.update_settings(header_rotation=45)
+```
 
 #### column_edit_options
 

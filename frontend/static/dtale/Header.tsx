@@ -234,10 +234,12 @@ const Header: React.FC<HeaderProps & WithTranslation> = ({
   if (!drag && colCfg?.resized) {
     classes.push('resized');
   }
-  if (settings.verticalHeaders) {
+  const headerRotation = gu.getHeaderRotation(settings);
+  if (headerRotation) {
     headerStyle.height = 'inherit';
-    textStyle.width = gu.getRowHeight(0, columns, settings.backgroundMode, maxRowHeight, settings.verticalHeaders) - 15;
+    textStyle.width = gu.getRowHeight(0, columns, settings.backgroundMode, maxRowHeight, headerRotation) - 15;
     textStyle.textAlign = 'left';
+    (textStyle as React.CSSProperties & Record<string, string>)['--header-rotation'] = `${headerRotation}deg`;
     classes.push('rotate-header');
   } else {
     classes.push('w-100');

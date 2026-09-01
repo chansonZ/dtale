@@ -56,7 +56,6 @@ const selectResult = createSelector(
     selectors.selectMaxColumnWidth,
     selectors.selectMaxRowHeight,
     selectors.selectEditedTextAreaHeight,
-    selectors.selectVerticalHeaders,
     selectors.selectIsArcticDB,
     selectors.selectHideMainMenu,
     selectors.selectHideColumnMenus,
@@ -72,7 +71,6 @@ const selectResult = createSelector(
     maxColumnWidth,
     maxRowHeight,
     editedTextAreaHeight,
-    verticalHeaders,
     isArcticDB,
     hideMainMenu,
     hideColumnMenus,
@@ -87,7 +85,6 @@ const selectResult = createSelector(
     maxColumnWidth: maxColumnWidth || undefined,
     maxRowHeight: maxRowHeight || undefined,
     editedTextAreaHeight,
-    verticalHeaders: verticalHeaders ?? false,
     isArcticDB,
     hideMainMenu,
     hideColumnMenus,
@@ -106,7 +103,6 @@ export const DataViewer: React.FC = () => {
     maxColumnWidth,
     maxRowHeight,
     editedTextAreaHeight,
-    verticalHeaders,
     isArcticDB,
     hideMainMenu,
     hideColumnMenus,
@@ -116,6 +112,7 @@ export const DataViewer: React.FC = () => {
   const closeColumnMenu = (): void => dispatch(actions.closeColumnMenu());
   const updateFilteredRanges = (query: string): void => dispatch(actions.updateFilteredRanges(query));
   const clearDataViewerUpdate = (): PayloadAction<void> => dispatch(AppActions.ClearDataViewerUpdateAction());
+  const headerRotation = gu.getHeaderRotation(settings);
 
   const [rowCount, setRowCount] = React.useState(!!isArcticDB ? isArcticDB : 0);
   const [data, setData] = React.useState<DataViewerData>({});
@@ -217,7 +214,7 @@ export const DataViewer: React.FC = () => {
               maxColumnWidth,
             ),
           }));
-          updatedTriggerResize = verticalHeaders;
+          updatedTriggerResize = !!headerRotation;
           if (settings.backgroundMode === 'outliers') {
             updatedColumns = updatedColumns.map(bu.buildOutlierScales);
           }
@@ -316,7 +313,7 @@ export const DataViewer: React.FC = () => {
     }
   }, [triggerResize]);
 
-  React.useEffect(resizeGrid, [verticalHeaders]);
+  React.useEffect(resizeGrid, [headerRotation]);
 
   React.useEffect(resizeGrid, [
     gu.getActiveCols(columns, settings.backgroundMode).reduce((res, c) => res + (c.width ?? gu.DEFAULT_COL_WIDTH), 0),
@@ -431,7 +428,7 @@ export const DataViewer: React.FC = () => {
                   <MultiGrid
                     {...gu.buildGridStyles(
                       theme,
-                      gu.getRowHeight(0, columns, settings.backgroundMode, maxRowHeight, verticalHeaders),
+                      gu.getRowHeight(0, columns, settings.backgroundMode, maxRowHeight, headerRotation),
                     )}
                     overscanColumnCount={0}
                     overscanRowCount={5}
@@ -444,10 +441,10 @@ export const DataViewer: React.FC = () => {
                     height={gu.gridHeight(height, columns, settings, ribbonMenuOpen, editedTextAreaHeight)}
                     width={width - (menuPinned ? 198 : 3)}
                     columnWidth={({ index }) =>
-                      gu.getColWidth(index, columns, settings.backgroundMode, verticalHeaders)
+                      gu.getColWidth(index, columns, settings.backgroundMode, headerRotation)
                     }
                     rowHeight={({ index }) =>
-                      gu.getRowHeight(index, columns, settings.backgroundMode, maxRowHeight, verticalHeaders)
+                      gu.getRowHeight(index, columns, settings.backgroundMode, maxRowHeight, headerRotation)
                     }
                     onSectionRendered={onSectionRendered}
                     ref={(element: any) => {

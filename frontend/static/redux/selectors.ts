@@ -48,6 +48,7 @@ export const selectPredefinedFilters = createSelector([selectSettings], (setting
 export const selectSortInfo = createSelector([selectSettings], (settings) => settings?.sortInfo);
 export const selectHighlightFilter = createSelector([selectSettings], (settings) => settings?.highlightFilter);
 export const selectVerticalHeaders = createSelector([selectSettings], (settings) => settings?.verticalHeaders);
+export const selectHeaderRotation = createSelector([selectSettings], (settings) => settings?.headerRotation);
 export const selectSettingsHideHeaderEditor = createSelector(
   [selectSettings],
   (settings) => settings?.hide_header_editor,

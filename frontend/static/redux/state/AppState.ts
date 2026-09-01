@@ -372,6 +372,7 @@ export interface InstanceSettings {
   backgroundMode?: string;
   rangeHighlight?: RangeHighlightConfig;
   verticalHeaders: boolean;
+  headerRotation?: number;
   predefinedFilters: Record<string, PredefinedFilterValue>;
   sortInfo?: SortDef[];
   nanDisplay?: string;

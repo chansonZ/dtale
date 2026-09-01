@@ -103,6 +103,7 @@ def test_startup(unittest):
             rangeHighlight=None,
             backgroundMode=None,
             verticalHeaders=False,
+            headerRotation=-45,
             highlightFilter=False,
             main_title="test_title",
             main_title_font="test_title_font",
@@ -134,6 +135,7 @@ def test_startup(unittest):
             rangeHighlight=None,
             backgroundMode=None,
             verticalHeaders=False,
+            headerRotation=-45,
             highlightFilter=False,
             main_title="test_title",
             main_title_font="test_title_font",
@@ -187,6 +189,7 @@ def test_startup(unittest):
             rangeHighlight=range_highlights,
             backgroundMode=None,
             verticalHeaders=False,
+            headerRotation=-45,
             highlightFilter=False,
         ),
         "no index = nothing locked",
@@ -207,6 +210,7 @@ def test_startup(unittest):
             rangeHighlight=None,
             backgroundMode=None,
             verticalHeaders=False,
+            headerRotation=-45,
             highlightFilter=False,
         ),
         "should lock index columns",
@@ -226,6 +230,7 @@ def test_startup(unittest):
             rangeHighlight=None,
             backgroundMode=None,
             verticalHeaders=False,
+            headerRotation=-45,
             highlightFilter=False,
         ),
         "should not lock index columns",
@@ -245,6 +250,7 @@ def test_startup(unittest):
             rangeHighlight=None,
             backgroundMode=None,
             verticalHeaders=False,
+            headerRotation=-45,
             highlightFilter=False,
         ),
         "should not lock index columns",
@@ -4583,6 +4589,59 @@ def test_startup_with_column_edit_options():
         data_id = instance._data_id
         settings = global_state.get_settings(data_id)
         assert settings.get("column_edit_options") == edit_opts
+    finally:
+        global_state.cleanup()
+
+
+@pytest.mark.unit
+def test_startup_with_header_rotation():
+    """Test startup honors header_rotation, vertical_headers compatibility & validation."""
+    import dtale.views as views
+
+    global_state.cleanup()
+    try:
+        df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+
+        # default: no header_rotation, no vertical_headers -- resolves to -45 degrees
+        instance = views.startup("http://localhost:40000", data=df)
+        settings = global_state.get_settings(instance._data_id)
+        assert settings["headerRotation"] == -45
+        assert settings["verticalHeaders"] is False
+
+        # header_rotation=45
+        instance = views.startup(
+            "http://localhost:40000", data=df, header_rotation=45
+        )
+        settings = global_state.get_settings(instance._data_id)
+        assert settings["headerRotation"] == 45
+
+        # vertical_headers=True w/ no header_rotation resolves to the legacy -90 default
+        instance = views.startup(
+            "http://localhost:40000", data=df, vertical_headers=True
+        )
+        settings = global_state.get_settings(instance._data_id)
+        assert settings["headerRotation"] == -90
+        assert settings["verticalHeaders"] is True
+
+        # header_rotation=0 should be passed through explicitly even though it's falsy
+        instance = views.startup(
+            "http://localhost:40000",
+            data=df,
+            vertical_headers=True,
+            header_rotation=0,
+        )
+        settings = global_state.get_settings(instance._data_id)
+        assert settings["headerRotation"] == 0
+
+        # invalid header_rotation values should raise
+        with pytest.raises(ValueError):
+            views.startup(
+                "http://localhost:40000", data=df, header_rotation=200
+            )
+        with pytest.raises(ValueError):
+            views.startup(
+                "http://localhost:40000", data=df, header_rotation="foo"
+            )
     finally:
         global_state.cleanup()
 

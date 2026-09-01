@@ -223,6 +223,7 @@ def build_show_options(options=None):
         background_mode=None,
         range_highlights=None,
         vertical_headers=False,
+        header_rotation=None,
         theme=None,
         hide_shutdown=None,
         column_edit_options=None,
@@ -326,6 +327,9 @@ def build_show_options(options=None):
             )
         config_options["vertical_headers"] = get_config_val(
             config, defaults, "vertical_headers", "getboolean"
+        )
+        config_options["header_rotation"] = get_config_val(
+            config, defaults, "header_rotation", "getint"
         )
         config_options["column_edit_options"] = get_config_val(
             config, defaults, "column_edit_options"
