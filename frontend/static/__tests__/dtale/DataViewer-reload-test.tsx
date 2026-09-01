@@ -86,9 +86,9 @@ describe('DataViewer tests', () => {
     });
     expect(loadDataSpy.mock.calls).toEqual([
       ['1', { ids: '["0-55"]' }],
-      ['1', { ids: '["5-73"]' }],
-      ['1', { ids: '["0-73"]' }],
-      ['1', { ids: '["0-73"]' }],
+      ['1', { ids: '["5-71"]' }],
+      ['1', { ids: '["0-71"]' }],
+      ['1', { ids: '["0-71"]' }],
     ]);
     loadDataSpy.mockClear();
 

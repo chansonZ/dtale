@@ -141,7 +141,7 @@ export const getHeaderRotation = (settings?: InstanceSettings): number => {
   if (settings?.headerRotation !== undefined && settings?.headerRotation !== null) {
     return settings.headerRotation;
   }
-  return settings?.verticalHeaders ? -90 : 0;
+  return settings?.verticalHeaders ? -90 : -45;
 };
 
 const toRadians = (degrees: number): number => (degrees * Math.PI) / 180;
@@ -177,7 +177,8 @@ export const getRowHeight = (
     if (headerRotation) {
       const rad = toRadians(headerRotation);
       const cols = getActiveCols(columns, backgroundMode);
-      const maxWidth = Math.max(...cols.map((col) => col.headerWidth ?? col.width ?? HEADER_HEIGHT));
+      const maxWidth =
+        cols.length > 0 ? Math.max(...cols.map((col) => col.headerWidth ?? col.width ?? HEADER_HEIGHT)) : HEADER_HEIGHT;
       const rotatedHeight = Math.ceil(Math.abs(maxWidth * Math.sin(rad)) + Math.abs(HEADER_HEIGHT * Math.cos(rad)));
       return rotatedHeight < HEADER_HEIGHT ? HEADER_HEIGHT : rotatedHeight;
     }

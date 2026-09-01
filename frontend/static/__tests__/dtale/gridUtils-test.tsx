@@ -87,12 +87,12 @@ describe('gridUtils tests', () => {
     it('getRowHeight w/ 45', () => {
       const height = gu.getRowHeight(0, columns, undefined, undefined, 45);
       expect(height).toBeGreaterThan(gu.HEADER_HEIGHT);
-      expect(height).toBeLessThan(100);
+      expect(height).toBeLessThan(100 + gu.HEADER_HEIGHT);
     });
 
     it('getHeaderRotation', () => {
-      expect(gu.getHeaderRotation(undefined)).toEqual(0);
-      expect(gu.getHeaderRotation({ verticalHeaders: false } as any)).toEqual(0);
+      expect(gu.getHeaderRotation(undefined)).toEqual(-45);
+      expect(gu.getHeaderRotation({ verticalHeaders: false } as any)).toEqual(-45);
       expect(gu.getHeaderRotation({ verticalHeaders: true } as any)).toEqual(-90);
       expect(gu.getHeaderRotation({ verticalHeaders: true, headerRotation: 45 } as any)).toEqual(45);
       expect(gu.getHeaderRotation({ verticalHeaders: true, headerRotation: 0 } as any)).toEqual(0);
