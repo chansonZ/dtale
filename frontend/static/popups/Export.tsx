@@ -7,7 +7,7 @@ import { fullPath } from '../dtale/menu/dataViewerMenuUtils';
 import { closeChart } from '../redux/actions/charts';
 import { buildURL } from '../redux/actions/url-utils';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
-import { selectChartData, selectDataId, selectSettings } from '../redux/selectors';
+import { selectChartData, selectDataId, selectExportMaxRows, selectSettings } from '../redux/selectors';
 import { ExportPopupData } from '../redux/state/AppState';
 import { ENDPOINT as DATA_ENDPOINT } from '../repository/DataRepository';
 import { ExportThumb, SingleTrack, StyledSlider } from '../sliderUtils';
@@ -24,19 +24,31 @@ enum HTMLExportType {
   HTML = 'html',
 }
 
-const selectResult = createSelector([selectDataId, selectChartData, selectSettings], (dataId, chartData, settings) => ({
-  dataId,
-  chartData: chartData as ExportPopupData,
-  settings,
-}));
+const selectResult = createSelector(
+  [selectDataId, selectChartData, selectSettings, selectExportMaxRows],
+  (dataId, chartData, settings, exportMaxRows) => ({
+    dataId,
+    chartData: chartData as ExportPopupData,
+    settings,
+    exportMaxRows,
+  }),
+);
 
 const Export: React.FC<WithTranslation> = ({ t }) => {
-  const { dataId, chartData, settings } = useAppSelector(selectResult);
+  const { dataId, chartData, settings, exportMaxRows } = useAppSelector(selectResult);
   const dispatch = useAppDispatch();
   const onClose = (): PayloadAction<void> => dispatch(closeChart());
 
+  const defaultRows = exportMaxRows ? Math.min(chartData.rows, exportMaxRows) : chartData.rows;
+  const showRowSelector = !!exportMaxRows && chartData.rows > exportMaxRows;
+
   const exportFile = (exportType: ExportType): void => {
-    window.open(`${fullPath('/dtale/data-export', dataId)}?type=${exportType}&_id=${new Date().getTime()}`, '_blank');
+    const url = buildURL(fullPath('/dtale/data-export', dataId), {
+      type: exportType,
+      export_rows: exportMaxRows ? defaultRows : undefined,
+      _id: new Date().getTime(),
+    });
+    window.open(url, '_blank');
     onClose();
   };
 
@@ -66,7 +78,7 @@ const Export: React.FC<WithTranslation> = ({ t }) => {
   );
 
   const [htmlType, setHtmlType] = React.useState<HTMLExportType>();
-  const [rows, setRows] = React.useState<number>(chartData.rows);
+  const [rows, setRows] = React.useState<number>(defaultRows);
 
   const exportHTML = (): void => {
     const url = buildURL(fullPath(DATA_ENDPOINT, dataId), {
@@ -87,7 +99,7 @@ const Export: React.FC<WithTranslation> = ({ t }) => {
           <ButtonToggle
             options={buttons}
             update={(value: HTMLExportType) => {
-              if (chartData.rows > 10000) {
+              if (showRowSelector) {
                 setHtmlType(value);
               } else {
                 exportHTML();
@@ -98,7 +110,7 @@ const Export: React.FC<WithTranslation> = ({ t }) => {
           />
         </div>
       </div>
-      {htmlType && chartData.rows > 10000 && (
+      {htmlType && showRowSelector && (
         <React.Fragment>
           <div className="form-group row">
             <label className="col-md-2 col-form-label text-right">{t('Rows')}</label>
@@ -115,7 +127,7 @@ const Export: React.FC<WithTranslation> = ({ t }) => {
                   defaultValue={rows}
                   renderTrack={SingleTrack as any}
                   renderThumb={(props: any, state: any) => ExportThumb(props, state)}
-                  max={chartData.rows}
+                  max={exportMaxRows ?? chartData.rows}
                   value={rows}
                   onAfterChange={(updatedRows: any) => setRows(updatedRows as number)}
                 />

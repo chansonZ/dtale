@@ -139,6 +139,9 @@ def load_app_settings(config):
     hide_drop_rows = get_config_val(
         config, curr_app_settings, "hide_drop_rows", section="app", getter="getboolean"
     )
+    export_max_rows = get_config_val(
+        config, curr_app_settings, "export_max_rows", section="app", getter="getint"
+    )
 
     global_state.set_app_settings(
         dict(
@@ -163,6 +166,7 @@ def load_app_settings(config):
             hide_row_expanders=hide_row_expanders,
             enable_custom_filters=enable_custom_filters,
             enable_web_uploads=enable_web_uploads,
+            export_max_rows=export_max_rows,
         )
     )
 

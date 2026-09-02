@@ -171,6 +171,10 @@ export const maxRowHeight = createReducer<number | null>(null, (builder) =>
     .addCase(AppActions.ClearMaxHeightAction, () => null),
 );
 
+export const exportMaxRows = createReducer<number | null>(null, (builder) =>
+  builder.addCase(AppActions.InitAction, () => toFloat(getHiddenValue('export_max_rows'), true) ?? null),
+);
+
 export const mainTitle = createReducer<string | null>(null, (builder) =>
   builder.addCase(AppActions.InitAction, () => getHiddenValue('main_title') ?? null),
 );

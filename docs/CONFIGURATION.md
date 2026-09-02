@@ -28,6 +28,7 @@ hide_column_menus = False
 hide_row_expanders = False
 enable_custom_filters = False
 enable_web_uploads = False
+export_max_rows = 10000 # the default value is None (no limit); applies to CSV, TSV, Parquet & HTML exports
 
 [charts] # this controls how many points can be contained within scatter & 3D charts
 scatter_points = 15000
@@ -62,6 +63,7 @@ auto_hide_empty_columns = False
 Some notes on these properties:
 * *theme:* available values are 'light' & 'dark'
 * *host/port/app_root:* have no default
+* *export_max_rows:* the maximum number of rows allowed when exporting data (applies to CSV, TSV, Parquet & HTML exports). When unset (the default, `None`) no limit is applied and the full result set (after any filters/sorting have been applied) will be exported. When set, requests for fewer rows than this value will be honored as-is, and requests for more rows (or no explicit row count) will be capped at this value. This limit is always enforced server-side, even if a request is made directly (bypassing the UI).
 
 Here is the hierarchy of how parameters are passed to `dtale.show` (in order of most important to least):
 1) Passing parameters directly into `dtale.show` or passing a dictionary of settings to `dtale.global_state.set_app_settings` or `dtale.global_state.set_auth_settings`

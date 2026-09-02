@@ -37,6 +37,7 @@ APP_SETTINGS = {
     "enable_custom_filters": False,
     "enable_web_uploads": False,
     "hide_row_expanders": False,
+    "export_max_rows": None,
 }
 
 AUTH_SETTINGS = {"active": False, "username": None, "password": None}

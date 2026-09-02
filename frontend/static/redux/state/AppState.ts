@@ -441,6 +441,7 @@ export interface AppSettings {
   columnCount: number;
   maxColumnWidth: number | null;
   maxRowHeight: number | null;
+  exportMaxRows: number | null;
   mainTitle: string | null;
   mainTitleFont: string | null;
   queryEngine: QueryEngine;

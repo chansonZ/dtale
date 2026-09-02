@@ -131,6 +131,7 @@ export const selectMainTitle = (state: AppStoreState): string | null => state.ma
 export const selectMainTitleFont = (state: AppStoreState): string | null => state.mainTitleFont;
 export const selectDataViewerUpdate = (state: AppStoreState): DataViewerUpdate | null => state.dataViewerUpdate;
 export const selectMaxRowHeight = (state: AppStoreState): number | null => state.maxRowHeight;
+export const selectExportMaxRows = (state: AppStoreState): number | null => state.exportMaxRows;
 export const selectEditedTextAreaHeight = (state: AppStoreState): number => state.editedTextAreaHeight;
 export const selectDragResize = (state: AppStoreState): number | null => state.dragResize;
 export const selectXArray = (state: AppStoreState): boolean => state.xarray;

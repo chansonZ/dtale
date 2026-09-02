@@ -2891,7 +2891,7 @@ def get_data(data_id):
         results = {}
         if total:
             if export:
-                export_rows = get_int_arg(request, "export_rows")
+                export_rows = get_export_rows(request)
                 if export_rows:
                     if query_builder:
                         data = instance.load_data(
@@ -2903,6 +2903,15 @@ def get_data(data_id):
                         data = data.head(export_rows)
                     else:
                         data = instance.load_data(row_range=[0, export_rows])
+                else:
+                    if query_builder:
+                        data = instance.load_data(
+                            query_builder=query_builder, **date_range
+                        )
+                    elif len(date_range):
+                        data = instance.load_data(**date_range)
+                    else:
+                        data = instance.load_data()
                 data, _ = format_data(data)
                 data = data[
                     curr_locked + [c for c in data.columns if c not in curr_locked]
@@ -3034,7 +3043,7 @@ def get_data(data_id):
         results = {}
         if total:
             if export:
-                export_rows = get_int_arg(request, "export_rows")
+                export_rows = get_export_rows(request)
                 if export_rows:
                     data = data.head(export_rows)
                 results = f.format_dicts(data.itertuples())
@@ -3180,6 +3189,34 @@ def load_filtered_ranges(data_id):
     return jsonify(curr_settings["filteredRanges"])
 
 
+def get_export_rows(request, requested_rows=None):
+    """
+    Determine the number of rows which should be exported based on the "export_rows" query
+    parameter (or an explicitly passed value for it) as well as the "export_max_rows" application
+    setting.  This is used to enforce a server-side limit on export size regardless of what the
+    front-end requests, and applies to CSV, TSV, Parquet & HTML exports.
+
+    :param request: :attr:`flask:flask.request`
+    :param requested_rows: number of rows to export, if not provided this will be read from the
+                            "export_rows" query parameter
+    :return: the number of rows which should be exported, `None` means no limit should be applied
+    """
+    if requested_rows is None:
+        requested_rows = get_int_arg(request, "export_rows")
+    if requested_rows is not None and requested_rows <= 0:
+        requested_rows = None
+
+    max_rows = global_state.get_app_settings().get("export_max_rows")
+    if max_rows is not None and max_rows <= 0:
+        max_rows = None
+
+    if max_rows is None:
+        return requested_rows
+    if requested_rows is None:
+        return max_rows
+    return min(requested_rows, max_rows)
+
+
 @dtale.route("/data-export/<data_id>")
 @exception_decorator
 def data_export(data_id):
@@ -3197,6 +3234,9 @@ def data_export(data_id):
             if c["visible"]
         ]
     ]
+    export_rows = get_export_rows(request)
+    if export_rows is not None:
+        data = data.head(export_rows)
     file_type = get_str_arg(request, "type", "csv")
     if file_type in ["csv", "tsv"]:
         tsv = file_type == "tsv"

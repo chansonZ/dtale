@@ -30,6 +30,7 @@ def test_load_app_settings():
         "hide_row_expanders": True,
         "enable_custom_filters": True,
         "enable_web_uploads": True,
+        "export_max_rows": None,
     }
     with ExitStack() as stack:
         stack.enter_context(mock.patch("dtale.global_state.APP_SETTINGS", settings))
@@ -49,6 +50,7 @@ def test_load_app_settings():
         assert settings["hide_row_expanders"]
         assert settings["enable_custom_filters"]
         assert settings["enable_web_uploads"]
+        assert settings["export_max_rows"] is None
 
         load_app_settings(
             load_config_state(os.path.join(os.path.dirname(__file__), "dtale.ini"))
@@ -69,6 +71,7 @@ def test_load_app_settings():
         assert not settings["hide_row_expanders"]
         assert not settings["enable_custom_filters"]
         assert not settings["enable_web_uploads"]
+        assert settings["export_max_rows"] == 10000
 
 
 @pytest.mark.unit
@@ -89,6 +92,7 @@ def test_load_app_settings_w_missing_props():
         "hide_row_expanders": True,
         "enable_custom_filters": True,
         "enable_web_uploads": True,
+        "export_max_rows": None,
     }
     with ExitStack() as stack:
         stack.enter_context(mock.patch("dtale.global_state.APP_SETTINGS", settings))
@@ -106,6 +110,7 @@ def test_load_app_settings_w_missing_props():
         assert settings["hide_row_expanders"]
         assert settings["enable_custom_filters"]
         assert settings["enable_web_uploads"]
+        assert settings["export_max_rows"] is None
 
         load_app_settings(
             load_config_state(
@@ -124,6 +129,7 @@ def test_load_app_settings_w_missing_props():
         assert not settings["hide_row_expanders"]
         assert not settings["enable_custom_filters"]
         assert not settings["enable_web_uploads"]
+        assert settings["export_max_rows"] is None
 
 
 @pytest.mark.unit

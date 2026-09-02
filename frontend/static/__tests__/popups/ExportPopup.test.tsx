@@ -31,9 +31,9 @@ describe('ExportOption', () => {
     dimensions.beforeAll();
   });
 
-  const setupMock = async (overrides?: Partial<AppStoreState>): Promise<void> => {
+  const setupMock = async (overrides?: Partial<AppStoreState>, exportMaxRows?: string): Promise<void> => {
     const store = reduxUtils.createDtaleStore();
-    buildInnerHTML({ dataId: '0', settings: '' }, store);
+    buildInnerHTML({ dataId: '0', settings: '', exportMaxRows }, store);
     store.dispatch(AppActions.UpdateSettingsAction({ sortInfo: [], ...overrides?.settings }));
     store.dispatch(
       AppActions.OpenChartAction({ visible: true, rows: 50, ...overrides?.chartData, type: PopupType.EXPORT }),
@@ -106,7 +106,7 @@ describe('ExportOption', () => {
 
   describe('HTML export over 10000 rows', () => {
     beforeEach(async () => {
-      await setupMock({ chartData: { visible: true, type: PopupType.EXPORT, rows: 11000 } });
+      await setupMock({ chartData: { visible: true, type: PopupType.EXPORT, rows: 11000 } }, '10000');
       await act(async () => {
         await fireEvent.click(screen.getByText('html'));
       });
@@ -137,6 +137,52 @@ describe('ExportOption', () => {
         await fireEvent.click(screen.getByTestId('export-html'));
       });
       expect(openSpy.mock.calls[0][0].startsWith('/dtale/data/0?export=true&export_rows=1000&_id=')).toBe(true);
+    });
+  });
+
+  describe('export_max_rows configuration', () => {
+    it('does not limit exports when export_max_rows is not configured', async () => {
+      await setupMock({ chartData: { visible: true, type: PopupType.EXPORT, rows: 50000 } });
+      await act(async () => {
+        await fireEvent.click(screen.getByText('CSV'));
+      });
+      expect(openSpy.mock.calls[0][0]).not.toContain('export_rows');
+      await act(async () => {
+        await fireEvent.click(screen.getByText('html'));
+      });
+      expect(openSpy.mock.calls[1][0].startsWith('/dtale/data/0?export=true&export_rows=50000&_id=')).toBe(true);
+    });
+
+    it('exports all rows when data is smaller than export_max_rows', async () => {
+      await setupMock({ chartData: { visible: true, type: PopupType.EXPORT, rows: 5000 } }, '10000');
+      await act(async () => {
+        await fireEvent.click(screen.getByText('CSV'));
+      });
+      expect(openSpy.mock.calls[0][0]).toContain('export_rows=5000');
+      await act(async () => {
+        await fireEvent.click(screen.getByText('html'));
+      });
+      expect(openSpy.mock.calls[1][0].startsWith('/dtale/data/0?export=true&export_rows=5000&_id=')).toBe(true);
+    });
+
+    it('caps exports to export_max_rows when data exceeds it', async () => {
+      await setupMock({ chartData: { visible: true, type: PopupType.EXPORT, rows: 20000 } }, '10000');
+      await act(async () => {
+        await fireEvent.click(screen.getByText('TSV'));
+      });
+      expect(openSpy.mock.calls[0][0]).toContain('export_rows=10000');
+      await act(async () => {
+        await fireEvent.click(screen.getByText('Parquet'));
+      });
+      expect(openSpy.mock.calls[1][0]).toContain('export_rows=10000');
+      await act(async () => {
+        await fireEvent.click(screen.getByText('html'));
+      });
+      const thumb = getByRole(document.body.querySelector('.modal-body')!, 'slider');
+      expect(thumb).toBeDefined();
+      expect(document.body.querySelector('.modal-body')!.getElementsByTagName('input')[0].getAttribute('value')).toBe(
+        '10000',
+      );
     });
   });
 });
