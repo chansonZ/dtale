@@ -88,6 +88,7 @@ export const buildInnerHTML = (props: Record<string, string | undefined> = {}, s
     buildHidden('username', props.username ?? ''),
     buildHidden('predefined_filters', props.predefinedFilters ?? '[]'),
     buildHidden('max_column_width', props.maxColumnWidth ?? 'None'),
+    buildHidden('export_max_rows', props.exportMaxRows ?? 'None'),
     buildHidden('main_title', props.mainTitle ?? ''),
     buildHidden('main_title_font', props.mainTitleFont ?? ''),
     buildHidden('query_engine', props.queryEngine ?? 'python'),

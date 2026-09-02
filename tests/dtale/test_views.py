@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 from builtins import str
+from io import BytesIO
 
 import mock
 import numpy as np
@@ -2021,6 +2022,184 @@ def test_export_parquet(test_data):
             "/dtale/data-export/{}".format(c.port), query_string=dict(type="parquet")
         )
         assert response.content_type == "application/octet-stream"
+
+
+def _csv_row_ct(response):
+    lines = response.data.decode("utf-8").strip().split("\n")
+    return len(lines) - 1  # subtract header row
+
+
+@pytest.mark.unit
+def test_export_max_rows_csv_tsv(test_data):
+    import dtale.views as views
+
+    with app.test_client() as c:
+        test_data, _ = views.format_data(test_data)
+        build_data_inst({c.port: test_data})
+        build_dtypes({c.port: views.build_dtypes_state(test_data)})
+
+        try:
+            # not configured -> no limit applied, all rows exported
+            global_state.set_app_settings(dict(export_max_rows=None))
+            response = c.get("/dtale/data-export/{}".format(c.port))
+            assert _csv_row_ct(response) == len(test_data)
+
+            global_state.set_app_settings(dict(export_max_rows=10))
+
+            # no export_rows specified -> falls back to configured max
+            response = c.get("/dtale/data-export/{}".format(c.port))
+            assert _csv_row_ct(response) == 10
+
+            # requested rows < max -> honor requested rows
+            response = c.get(
+                "/dtale/data-export/{}".format(c.port),
+                query_string=dict(export_rows=5),
+            )
+            assert _csv_row_ct(response) == 5
+
+            # requested rows > max -> capped to max
+            response = c.get(
+                "/dtale/data-export/{}".format(c.port),
+                query_string=dict(export_rows=20),
+            )
+            assert _csv_row_ct(response) == 10
+
+            # invalid/negative requested rows -> falls back to configured max
+            response = c.get(
+                "/dtale/data-export/{}".format(c.port),
+                query_string=dict(export_rows=-5),
+            )
+            assert _csv_row_ct(response) == 10
+
+            # same rules apply to tsv
+            response = c.get(
+                "/dtale/data-export/{}".format(c.port),
+                query_string=dict(type="tsv", export_rows=5),
+            )
+            assert _csv_row_ct(response) == 5
+        finally:
+            global_state.set_app_settings(dict(export_max_rows=None))
+
+
+@pytest.mark.unit
+def test_export_max_rows_parquet(test_data):
+    pytest.importorskip("pyarrow")
+
+    import dtale.views as views
+
+    with app.test_client() as c:
+        test_data, _ = views.format_data(test_data)
+        build_data_inst({c.port: test_data})
+        build_dtypes({c.port: views.build_dtypes_state(test_data)})
+
+        try:
+            global_state.set_app_settings(dict(export_max_rows=None))
+            response = c.get(
+                "/dtale/data-export/{}".format(c.port), query_string=dict(type="parquet")
+            )
+            parquet_df = pd.read_parquet(BytesIO(response.data))
+            assert len(parquet_df) == len(test_data)
+
+            global_state.set_app_settings(dict(export_max_rows=10))
+
+            # no export_rows specified -> falls back to configured max
+            response = c.get(
+                "/dtale/data-export/{}".format(c.port), query_string=dict(type="parquet")
+            )
+            parquet_df = pd.read_parquet(BytesIO(response.data))
+            assert len(parquet_df) == 10
+
+            # requested rows < max -> honor requested rows
+            response = c.get(
+                "/dtale/data-export/{}".format(c.port),
+                query_string=dict(type="parquet", export_rows=5),
+            )
+            parquet_df = pd.read_parquet(BytesIO(response.data))
+            assert len(parquet_df) == 5
+
+            # requested rows > max -> capped to max
+            response = c.get(
+                "/dtale/data-export/{}".format(c.port),
+                query_string=dict(type="parquet", export_rows=20),
+            )
+            parquet_df = pd.read_parquet(BytesIO(response.data))
+            assert len(parquet_df) == 10
+        finally:
+            global_state.set_app_settings(dict(export_max_rows=None))
+
+
+@pytest.mark.unit
+def test_export_max_rows_html(unittest, test_data):
+    import dtale.views as views
+
+    with app.test_client() as c:
+        test_data, _ = views.format_data(test_data)
+        build_data_inst({c.port: test_data})
+        build_dtypes({c.port: views.build_dtypes_state(test_data)})
+
+        try:
+            # not configured -> no limit, export_rows honored as-is
+            global_state.set_app_settings(dict(export_max_rows=None))
+            response = c.get(
+                "/dtale/data/{}".format(c.port),
+                query_string=dict(export=True, export_rows=20),
+            )
+            assert response.content_type == "text/html"
+
+            global_state.set_app_settings(dict(export_max_rows=10))
+
+            # no export_rows specified -> falls back to configured max
+            response = c.get(
+                "/dtale/data/{}".format(c.port), query_string=dict(export=True)
+            )
+            assert response.content_type == "text/html"
+
+            # requested rows < max -> honor requested rows
+            response = c.get(
+                "/dtale/data/{}".format(c.port),
+                query_string=dict(export=True, export_rows=5),
+            )
+            assert response.content_type == "text/html"
+
+            # requested rows > max -> capped to max
+            response = c.get(
+                "/dtale/data/{}".format(c.port),
+                query_string=dict(export=True, export_rows=20),
+            )
+            assert response.content_type == "text/html"
+
+            # invalid/negative requested rows -> falls back to configured max
+            response = c.get(
+                "/dtale/data/{}".format(c.port),
+                query_string=dict(export=True, export_rows=-5),
+            )
+            assert response.content_type == "text/html"
+        finally:
+            global_state.set_app_settings(dict(export_max_rows=None))
+
+
+@pytest.mark.unit
+def test_get_export_rows():
+    import dtale.views as views
+
+    class FakeRequest(object):
+        def __init__(self, args):
+            self.args = args
+
+    try:
+        global_state.set_app_settings(dict(export_max_rows=None))
+        assert views.get_export_rows(FakeRequest({})) is None
+        assert views.get_export_rows(FakeRequest({"export_rows": "5"})) == 5
+
+        global_state.set_app_settings(dict(export_max_rows=10))
+        assert views.get_export_rows(FakeRequest({})) == 10
+        assert views.get_export_rows(FakeRequest({"export_rows": "5"})) == 5
+        assert views.get_export_rows(FakeRequest({"export_rows": "20"})) == 10
+        assert views.get_export_rows(FakeRequest({"export_rows": "-5"})) == 10
+        assert views.get_export_rows(FakeRequest({"export_rows": "0"})) == 10
+        assert views.get_export_rows(FakeRequest({"export_rows": "abc"})) == 10
+    finally:
+        global_state.set_app_settings(dict(export_max_rows=None))
 
 
 def build_ts_data(size=5, days=5):
