@@ -4357,6 +4357,24 @@ def build_missingno_chart(chart_type, data_id):
         date_index = get_str_arg(request, "date_index")
         freq = get_str_arg(request, "freq")
         if date_index:
+            if pandas_util.check_pandas_version("2.2.0"):
+                freq = {
+                    "M": "ME",
+                    "SM": "SME",
+                    "BM": "BME",
+                    "CBM": "CBME",
+                    "Q": "QE",
+                    "BQ": "BQE",
+                    "Y": "YE",
+                    "BY": "BYE",
+                    "BH": "bh",
+                    "H": "h",
+                    "T": "min",
+                    "S": "s",
+                    "L": "ms",
+                    "U": "us",
+                    "N": "ns",
+                }.get(freq, freq)
             figure = msno.matrix(df.set_index(date_index), freq=freq)
         else:
             figure = msno.matrix(df)
